@@ -1,105 +1,123 @@
-### Introduction
+## Cachematrix.R
 
-This second programming assignment will require you to write an R
-function that is able to cache potentially time-consuming computations.
-For example, taking the mean of a numeric vector is typically a fast
-operation. However, for a very long vector, it may take too long to
-compute the mean, especially if it has to be computed repeatedly (e.g.
-in a loop). If the contents of a vector are not changing, it may make
-sense to cache the value of the mean so that when we need it again, it
-can be looked up in the cache rather than recomputed. In this
-Programming Assignment you will take advantage of the scoping rules of
-the R language and how they can be manipulated to preserve state inside
-of an R object.
+Includes 2 functions : **makeCacheMatrix()** and **cacheSolve()** to cache and calculate the inverse of given matrix.
 
-### Example: Caching the Mean of a Vector
 
-In this example we introduce the `<<-` operator which can be used to
-assign a value to an object in an environment that is different from the
-current environment. Below are two functions that are used to create a
-special object that stores a numeric vector and caches its mean.
+### makeCacheMatrix() 
 
-The first function, `makeVector` creates a special "vector", which is
-really a list containing a function to
+Function **makeCacheMatrix()** create a list to
 
-1.  set the value of the vector
-2.  get the value of the vector
-3.  set the value of the mean
-4.  get the value of the mean
+1. set the value of the matrix via function *set()*
+2. get the value of the matrix via function *get()*
+3. set the value of the inverse matrix via function *setInverse()*
+4. get the value of the inverse matrix via function *getInverse*
 
-<!-- -->
+```{r}
+makeCacheMatrix <- function(x = matrix()) {
+        m <- NULL
+        set <- function(y) {
+                x <<- y
+                m <<- NULL
+        }
+        get <- function() x
+        setInverse <- function(inverse) m <<- inverse
+        getInverse <- function() m
+        list(set = set, get = get,
+             setInverse = setInverse,getInverse = getInverse)
+}
+```
 
-    makeVector <- function(x = numeric()) {
-            m <- NULL
-            set <- function(y) {
-                    x <<- y
-                    m <<- NULL
-            }
-            get <- function() x
-            setmean <- function(mean) m <<- mean
-            getmean <- function() m
-            list(set = set, get = get,
-                 setmean = setmean,
-                 getmean = getmean)
-    }
+### Exaple
 
-The following function calculates the mean of the special "vector"
-created with the above function. However, it first checks to see if the
-mean has already been calculated. If so, it `get`s the mean from the
-cache and skips the computation. Otherwise, it calculates the mean of
-the data and sets the value of the mean in the cache via the `setmean`
-function.
+Note that **makeCacheMatrix()** doesn't do any calculation.
+For example :
 
-    cachemean <- function(x, ...) {
-            m <- x$getmean()
-            if(!is.null(m)) {
-                    message("getting cached data")
-                    return(m)
-            }
-            data <- x$get()
-            m <- mean(data, ...)
-            x$setmean(m)
-            m
-    }
+```{r}
+        B <- matrix(1:4,2,2)
+        BB <- makeCacheMtrix(B)
+        BB
+```
+It shows results as below.
 
-### Assignment: Caching the Inverse of a Matrix
+```
+$set
+function (y) 
+{
+    x <<- y
+    m <<- NULL
+}
+<environment: 0x000000001347d430>
 
-Matrix inversion is usually a costly computation and there may be some
-benefit to caching the inverse of a matrix rather than computing it
-repeatedly (there are also alternatives to matrix inversion that we will
-not discuss here). Your assignment is to write a pair of functions that
-cache the inverse of a matrix.
+$get
+function () 
+x
+<environment: 0x000000001347d430>
 
-Write the following functions:
+$setmean
+function (mean) 
+m <<- mean
+<environment: 0x000000001347d430>
 
-1.  `makeCacheMatrix`: This function creates a special "matrix" object
-    that can cache its inverse.
-2.  `cacheSolve`: This function computes the inverse of the special
-    "matrix" returned by `makeCacheMatrix` above. If the inverse has
-    already been calculated (and the matrix has not changed), then
-    `cacheSolve` should retrieve the inverse from the cache.
+$getmean
+function () 
+m
+<environment: 0x000000001347d430>
+```
 
-Computing the inverse of a square matrix can be done with the `solve`
-function in R. For example, if `X` is a square invertible matrix, then
-`solve(X)` returns its inverse.
+### Function cacheSolve()
 
-For this assignment, assume that the matrix supplied is always
-invertible.
+Function **cacheSolve()** calculates the inverse of the matrix passed by **makeCacheMatrix()**.
 
-In order to complete this assignment, you must do the following:
+Checks if the inverse has already been calculated.
 
-1.  Fork the GitHub repository containing the stub R files at
-    [https://github.com/rdpeng/ProgrammingAssignment2](https://github.com/rdpeng/ProgrammingAssignment2)
-    to create a copy under your own account.
-2.  Clone your forked GitHub repository to your computer so that you can
-    edit the files locally on your own machine.
-3.  Edit the R file contained in the git repository and place your
-    solution in that file (please do not rename the file).
-4.  Commit your completed R file into YOUR git repository and push your
-    git branch to the GitHub repository under your account.
-5.  Submit to Coursera the URL to your GitHub repository that contains
-    the completed R code for the assignment.
+1. If calculated, 
+ *  it gets the inverse from the cache 
+ *  skips the computation.   
 
-### Grading
+2. Otherwise, 
+ *  it calculates the inverse of the matrix 
+ *  sets the value of the inverse in the cache via the   setinverse function.
 
-This assignment will be graded via peer assessment.
+
+```{r}
+cacheSolve <- function(x, ...) {
+        m <- x$getInverse()
+        if(!is.null(m)) {
+                message("getting cached data")
+                return(m)
+        }
+        data <- x$get()
+        m <- solve(data, ...)
+        x$setInverse(m)
+        m
+}
+```
+Like playing catch-ball ,input the list created by **makeCacheMatrix()** into **cacheSolve()** , not the original matrix we want to calculate.
+
+### Example (continued)
+
+For example, do first calculation,
+
+```{r}
+cacheSolve(BB)
+```
+return the inverse matrix of B.
+
+```
+             [,1] [,2]
+       [1,]   -2  1.5
+       [2,]    1 -0.5
+```
+Try again .
+
+```{r}
+cacheSolve(BB)
+```
+**cacheSolve()** find the cached inverse and skip the calculation. 
+```
+        getting cached data
+             [,1] [,2]
+       [1,]   -2  1.5
+       [2,]    1 -0.5
+```
+
