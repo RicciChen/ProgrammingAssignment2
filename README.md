@@ -27,7 +27,7 @@ makeCacheMatrix <- function(x = matrix()) {
 }
 ```
 
-### Exaple
+### Example
 
 Note that **makeCacheMatrix()** doesn't do any calculation.
 For example :
